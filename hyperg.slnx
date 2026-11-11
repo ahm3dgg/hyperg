@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="hyperg.vcxproj" Id="791b8dcf-aed2-484e-8fef-a94e4ac904c4">
+    <Deploy />
+  </Project>
+</Solution>
