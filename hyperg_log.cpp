@@ -8,7 +8,7 @@ void Log(const char* Message, ...)
 	va_start(args, Message);
 
 	vDbgPrintExWithPrefix(
-		"[+]", 
+		"[+] ", 
 		DPFLTR_IHVDRIVER_ID, 
 		DPFLTR_ERROR_LEVEL, 
 		Message, 

@@ -72,3 +72,39 @@ void AdjustControlRegisters()
 	cr4.LowPart |= cr4_en_mask;
 	cr4.LowPart &= cr4_dis_mask;
 }
+
+void InitVMMContext(PVMM_CONTEXT VmmContext)
+{
+	auto processor_affinity = KeQueryActiveProcessors();
+	u64 processor_count = 0;
+
+	for (u64 i = 0; i < 32; i++)
+	{
+		if (processor_affinity & (1ULL << i))
+		{
+			processor_count++;
+		}
+	}
+
+	VmmContext->ProcessorCount = processor_count;
+
+	VmmContext->VirtualProcessors = 
+		(PVCPU)ExAllocatePool(NonPagedPool, sizeof(VCPU) * VmmContext->ProcessorCount);
+}
+
+void InitVCPU(PVCPU VCPU)
+{
+	InitVMXON(VCPU);
+	InitVMCS(VCPU);
+	AdjustControlRegisters();
+	EnterVmx();
+
+	if (VMXON(VCPU->pVmxonRegion) != 0)
+	{
+		Log("Failed to Enter VMX Mode on Processor #%d.\n", KeGetCurrentProcessorNumber());
+	}
+	else
+	{
+		Log("Entered VMX Mode on Processor #%d.\n", KeGetCurrentProcessorNumber());
+	}
+}

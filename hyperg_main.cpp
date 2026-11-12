@@ -3,6 +3,8 @@
 #include "hyperg_vtx.hpp"
 #include <intrin.h>
 
+VMM_CONTEXT VmmContext;
+
 VOID
 DriverUnload(
 	PDRIVER_OBJECT DriverObject)
@@ -20,22 +22,27 @@ DriverEntry(
 	UNREFERENCED_PARAMETER(RegistryPath);
 
 	NTSTATUS Status;
-	VCPU vcpu;
 
 	Log("hyperg Loaded.\n");
 
-	InitVMXON(&vcpu);
-	InitVMCS(&vcpu);
-	AdjustControlRegisters();
-	EnterVmx();
+	DriverObject->DriverUnload = DriverUnload;
 
-	if (__vmx_on(&vcpu.pVmxonRegion) != 0)
+	InitVMMContext(&VmmContext);
+
+	for (u64 i = 0; i < VmmContext.ProcessorCount; i++)
 	{
-		Log("Failed to Enter VMX Mode.");
-	}
-	else
-	{
-		Log("Entered VMX Mode.");
+		PROCESSOR_NUMBER processor_number;
+		GROUP_AFFINITY affinity = {}, old_affinity = {};
+
+		KeGetProcessorNumberFromIndex(i, &processor_number);
+
+		affinity.Group = processor_number.Group;
+		affinity.Mask = (KAFFINITY)1 << processor_number.Number;
+		KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
+
+		InitVCPU(&VmmContext.VirtualProcessors[i]);
+
+		KeRevertToUserGroupAffinityThread(&old_affinity);
 	}
 
 	Status = STATUS_SUCCESS;

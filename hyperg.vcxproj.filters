@@ -45,5 +45,8 @@
     <ClInclude Include="hyperg_x86.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="hyperg_vmcs_components.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

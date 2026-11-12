@@ -25,3 +25,18 @@ void WriteMSR(u64 MSR, u64 Value)
 {
 	__writemsr(MSR, Value);
 }
+
+u8 VMXON(u64 Vmcs)
+{
+	return __vmx_on(&Vmcs);
+}
+
+void VMXOFF()
+{
+	__vmx_off();
+}
+
+void VMLAUNCH()
+{
+	__vmx_vmlaunch();
+}

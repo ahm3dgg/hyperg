@@ -94,6 +94,10 @@ CR4 ReadCR4();
 void WriteCR0(u64 Value);
 void WriteCR4(u64 Value);
 
+u8 VMXON(u64 Vmcs);
+void VMXOFF();
+void VMLAUNCH();
+
 template <typename T>
 T ReadMSR(u64 MSR);
 void WriteMSR(u64 MSR, u64 Value);

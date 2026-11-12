@@ -107,6 +107,7 @@
   <ItemGroup>
     <ClInclude Include="hyperg_log.hpp" />
     <ClInclude Include="hyperg_types.hpp" />
+    <ClInclude Include="hyperg_vmcs_components.hpp" />
     <ClInclude Include="hyperg_vtx.hpp" />
     <ClInclude Include="hyperg_x86.hpp" />
   </ItemGroup>
