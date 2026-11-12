@@ -97,6 +97,8 @@ void WriteCR4(u64 Value);
 u8 VMXON(u64 Vmcs);
 void VMXOFF();
 void VMLAUNCH();
+u8 VMPTRLD(u64 Vmcs);
+u8 VMCLEAR(u64 Vmcs);
 
 template <typename T>
 T ReadMSR(u64 MSR);

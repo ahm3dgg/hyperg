@@ -40,3 +40,13 @@ void VMLAUNCH()
 {
 	__vmx_vmlaunch();
 }
+
+u8 VMPTRLD(u64 Vmcs)
+{
+	return __vmx_vmptrld(&Vmcs);
+}
+
+u8 VMCLEAR(u64 Vmcs)
+{
+	return __vmx_vmclear(&Vmcs);
+}

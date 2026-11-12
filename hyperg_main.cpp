@@ -1,9 +1,47 @@
 #include <ntddk.h>
 #include "hyperg_log.hpp"
 #include "hyperg_vtx.hpp"
-#include <intrin.h>
+#include "hyperg_x86.hpp"
 
 VMM_CONTEXT VmmContext;
+
+u64 GetProcessorCount()
+{
+	KAFFINITY active_processors;
+	u64 processor_count = 0;
+	KeQueryActiveProcessorCount(&active_processors);
+
+	for (u64 i = 0; i < 64; i++)
+	{
+		if ((active_processors & (1ULL << i)) != 0)
+		{
+			processor_count++;
+		}
+	}
+
+	return processor_count;
+}
+
+template <typename TFunc, typename... TArgs>
+VOID
+CallOnAllProcessors(TFunc&& Func, TArgs&&... Args)
+{
+	for (u64 i = 0; i < GetProcessorCount(); i++)
+	{
+		PROCESSOR_NUMBER processor_number;
+		GROUP_AFFINITY affinity = {}, old_affinity = {};
+
+		KeGetProcessorNumberFromIndex((ULONG)i, &processor_number);
+
+		affinity.Group = processor_number.Group;
+		affinity.Mask = (KAFFINITY)1 << processor_number.Number;
+		KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
+
+		Func(i, Args...);
+
+		KeRevertToUserGroupAffinityThread(&old_affinity);
+	}
+}
 
 VOID
 DriverUnload(
@@ -11,6 +49,10 @@ DriverUnload(
 {
 	UNREFERENCED_PARAMETER(DriverObject);
 	Log("Driver Unloaded");
+
+	CallOnAllProcessors([](u64 processor_number) { VMXOFF(); });
+
+	ExFreePool(VmmContext.VirtualProcessors);
 }
 
 NTSTATUS 
@@ -29,21 +71,13 @@ DriverEntry(
 
 	InitVMMContext(&VmmContext);
 
-	for (u64 i = 0; i < VmmContext.ProcessorCount; i++)
-	{
-		PROCESSOR_NUMBER processor_number;
-		GROUP_AFFINITY affinity = {}, old_affinity = {};
+	CallOnAllProcessors(
+		[](u64 processor_number, VMM_CONTEXT& VmmCtx) {
+			InitVCPU(&VmmCtx.VirtualProcessors[processor_number]);
+		},
 
-		KeGetProcessorNumberFromIndex(i, &processor_number);
-
-		affinity.Group = processor_number.Group;
-		affinity.Mask = (KAFFINITY)1 << processor_number.Number;
-		KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
-
-		InitVCPU(&VmmContext.VirtualProcessors[i]);
-
-		KeRevertToUserGroupAffinityThread(&old_affinity);
-	}
+		VmmContext
+	);
 
 	Status = STATUS_SUCCESS;
 

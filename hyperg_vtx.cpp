@@ -99,12 +99,21 @@ void InitVCPU(PVCPU VCPU)
 	AdjustControlRegisters();
 	EnterVmx();
 
+	auto processor_number = KeGetCurrentProcessorNumber();
+
 	if (VMXON(VCPU->pVmxonRegion) != 0)
 	{
-		Log("Failed to Enter VMX Mode on Processor #%d.\n", KeGetCurrentProcessorNumber());
+		Log("Failed to Enter VMX Mode on Processor #%d.\n", processor_number);
+		return;
 	}
-	else
+	
+	Log("Entered VMX Mode on Processor #%d.\n", processor_number);
+	
+	if (VMCLEAR(VCPU->pVmcs) != 0 || VMPTRLD(VCPU->pVmcs) != 0)
 	{
-		Log("Entered VMX Mode on Processor #%d.\n", KeGetCurrentProcessorNumber());
+		Log("Failed to activate VMCS on Processor %#d\n", processor_number);
+		return;
 	}
+
+	Log("Activated VMCS on Processor #%d.\n", processor_number);
 }
